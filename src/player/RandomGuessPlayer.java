@@ -11,9 +11,14 @@ import world.World;
  */
 public class RandomGuessPlayer implements Player{
 
+    private int numRow;
+    private int numColumn;
+    
+
     @Override
     public void initialisePlayer(World world) {
-        // To be implemented.
+        this.numRow = world.numRow;
+        this.numColumn = world.numColumn;
     } // end of initialisePlayer()
 
     @Override
