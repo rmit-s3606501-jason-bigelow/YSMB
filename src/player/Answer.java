@@ -10,7 +10,7 @@ import ship.Ship;
 public class Answer {
     /** True if the guess was for a cell containing a ship, otherwise False. */
     boolean isHit = false;
-    /** If isHit is True (hit ship) and this hit destroyed a shit, this
+    /** If isHit is True (hit ship) and this hit destroyed a ship, this
         shipSunk attribute should be set to the object of ship destroyed. */
     Ship shipSunk = null;
 
