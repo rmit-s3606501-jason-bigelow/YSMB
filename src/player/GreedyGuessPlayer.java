@@ -12,7 +12,7 @@ import java.util.ArrayList;
  *
  * @author Youhan, Jeffrey
  */
-public class GreedyGuessPlayer implements Player extends RandomGuessPlayer {
+public class GreedyGuessPlayer extends RandomGuessPlayer implements Player {
 
     // Some Fields are inherited from RandomGuessPlayer
     boolean targetingMode = false;
@@ -43,37 +43,34 @@ public class GreedyGuessPlayer implements Player extends RandomGuessPlayer {
         System.out.println(unguessed);
     }
 
-    @Override
+    /** Inherit from RandomGuessPlayer*/
     public Answer getAnswer(Guess guess) {
-        // To be implemented.
-
-        // dummy return
-        return null;
+        return super.getAnswer(guess);
     }
 
 
     @Override
     public Guess makeGuess() {
-        // To be implemented.
-
-        // dummy return
-        return null;
+        if (targetingMode) {
+            // NYI
+            return super.makeGuess();
+        }
+        else return super.makeGuess();
     }
 
 
     @Override
+    /** Update our tactic according to the response:
+      * If we hit and didn't destroy, keep targeting;
+      * else we keep randomly guessing from our guess set.
+      */
     public void update(Guess guess, Answer answer) {
-        // To be implemented.
-        if (Answer.isHit) {
-            // Keep targeting 
-            if (Answer.shipSunk == null) {
-            
-            }
-            // Resume random guessing
-            else {
-            
-            }
+        // TODO: Detect which direction the ship is placed after two guesses
+        // If we hit but haven't destroyed, targeting mode
+        if (answer.isHit && answer.shipSunk == null) {
+            targetingMode = true;
         }
+        // Otherwise keep guessing randomly
         else {
             targetingMode = false;
         }
@@ -82,7 +79,7 @@ public class GreedyGuessPlayer implements Player extends RandomGuessPlayer {
 
     /** Does the same thing as RandomGuessPlayer */
     public boolean noRemainingShips() {
-        super.noRemainingShips();
+        return super.noRemainingShips();
     }
 
 }

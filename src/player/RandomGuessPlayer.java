@@ -45,13 +45,21 @@ public class RandomGuessPlayer implements Player{
     @Override
     /** Answer the other player about whether they hit anything and which type
       * (if any) of ship they sunk.
-      * Our world.shots will already contain their shot, so for
-      * RandomGuessPlayer the information in 'guess' is irrelevant
       */
     public Answer getAnswer(Guess guess) {
         Answer a = new Answer();
+        ship.Ship hitShip = null;
         /* Check all of our ships */
         for (World.ShipLocation sl : world.shipLocations) {
+            /* Check if this ship contains the guess */
+            for (World.Coordinate c : sl.coordinates) {
+                if (c.row == guess.row && c.column == guess.column) {
+                    hitShip = sl.ship;
+                }
+            }
+            /* This is not the ship you are looking for */
+            if (hitShip == null) continue;
+
             /* Check how many cells were sunk in this ship */
             int sunkCells = 0;
             for (World.Coordinate c : sl.coordinates) {
@@ -62,7 +70,9 @@ public class RandomGuessPlayer implements Player{
             /* Construct our answer */
             if (sunkCells > 0) {
                 a.isHit = true;
+                /* If we sunk all the cells, return the ship */
                 if (sunkCells == sl.ship.len()) {a.shipSunk = sl.ship;}
+                /* else return no ship sunk */
                 else {a.shipSunk = null;}
                 return a;
             }
