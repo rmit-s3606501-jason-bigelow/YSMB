@@ -23,6 +23,19 @@ public class World {
     public class Coordinate {
         public int row;
         public int column;
+        
+        public String toString() {
+            return String.format("Coordinate {row=%s, col=%s}", row, column);
+        }
+        
+        public boolean equals(Object o) {
+            return (
+                o != null
+                && o instanceof Coordinate
+                && ((Coordinate) o).row == this.row
+                && ((Coordinate) o).column == this.column
+            );
+        }
     }
 
     // nested class for storing ship locations.
