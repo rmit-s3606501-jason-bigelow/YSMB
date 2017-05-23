@@ -10,15 +10,15 @@ import java.util.ArrayList;
  * Random guess player (task A).
  * Please implement this class.
  *
- * @author Youhan, Jeffrey
+ * @author Youhan, Jeffrey, s3606501
  */
 public class RandomGuessPlayer implements Player{
 
-    private int numRow;
-    private int numCol;
-    private World world;
-    private Random random;
-    private ArrayList<Guess> unguessed;
+    protected int numRow;
+    protected int numCol;
+    protected World world;
+    protected Random random;
+    protected ArrayList<Guess> unguessed;
 
     @Override
     /** Initialise our random guessing playewr. */
