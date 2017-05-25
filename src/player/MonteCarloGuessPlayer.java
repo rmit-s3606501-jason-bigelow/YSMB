@@ -106,6 +106,10 @@ public class MonteCarloGuessPlayer extends RandomGuessPlayer implements Player{
         {//Eliminating target
             chosenTarget = fetchBestKill();
         }
+        if(chosenTarget.state != 'n')
+        {
+            System.out.println("ERROR: USED SPACE FIRED UPON");
+        }
         Guess target = new Guess();
         target.column = chosenTarget.col;
         target.row = chosenTarget.row;
