@@ -1,5 +1,5 @@
 package player;
-public class MonteCoord{
+public class MonteCoord implements Comparable{
     int row;
     int col;
     int odds;
@@ -17,5 +17,9 @@ public class MonteCoord{
         this.row = y;
         this.odds = odds;
         this.state = 'n';
+    }
+    public int compareTo(MonteCoord other)
+    {
+        return this.odds - other.odds;
     }
 }

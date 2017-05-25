@@ -108,11 +108,11 @@ public class MonteCarloGuessPlayer extends RandomGuessPlayer implements Player{
         }
         else//TODO: Cleanup after killing a target?
         {//Eliminating target
-            if(size(strikes) == 1)
+            if(strikes.size() == 1)
             {
                 //clean target seeking
-                int width  = targetWidth(strikes.get(0));
-                int height = targetHeight(strike.get(0));
+                int width  = targetWidth(strikes.get(0).col,strikes.get(0).row);
+                int height = targetHeight(strikes.get(0).col,strikes.get(0).row);
                 int runningTotalOdds = 0;
                 int i;
                 /*for(i = 0; i < targetsLeft.length; i++)
@@ -175,7 +175,7 @@ public class MonteCarloGuessPlayer extends RandomGuessPlayer implements Player{
             {
                 seekGrid[guess.column][guess.row].state = 'h';
                 seekGrid[guess.column][guess.row].odds = 0;
-                lockedTarget = true;
+                lockedTarget = seekGrid[guess.column][guess.row];
                 strikes.add(seekGrid[guess.column][guess.row]);
             }
             else//Hit, sunk
@@ -183,7 +183,7 @@ public class MonteCarloGuessPlayer extends RandomGuessPlayer implements Player{
                 seekGrid[guess.column][guess.row].state = 's';
                 seekGrid[guess.column][guess.row].odds = 0;
                 clearStrikes();//TODO: IMPLEMENT THIS
-                lockedTarget = false;
+                lockedTarget = null;
                 int sunkIndex;
                 switch(answer.shipSunk.name())
                 {
