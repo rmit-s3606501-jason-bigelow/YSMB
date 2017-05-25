@@ -1,6 +1,8 @@
 package player;
 
 import java.util.Scanner;
+import java.util.ArrayList;
+import java.util.Random;
 import world.World;
 
 /**
@@ -11,41 +13,31 @@ import world.World;
  */
 public class MonteCarloGuessPlayer extends RandomGuessPlayer implements Player{
 
-    boolean lockedTarget = false;
+    MonteCoord lockedTarget = null;
+    public ArrayList<MonteCoord> strikes;
     public ArrayList<World.Coordinate> shotsFired = new ArrayList<>();
-    public MonteCoord[][] targetGrid;
+    public MonteCoord[][] seekGrid;
+    public ArrayList<MonteCoord> xTargetGrid;
+    public ArrayList<MonteCoord> yTargetGrid;
     public int[] targetsLeft;
     public int longestTarget;
     @Override
     public void initialisePlayer(World world) {
-        // Pulled from Jason's greedy code; waste not, want not
         this.numRow = world.numRow;
         this.numCol = world.numColumn;
         this.world = world;
         this.random = new Random();
-        /* Construct a list of all unguessed cells viz. all cells, which we 
-           will later make guesses as a random index of. */
-        this.unguessed = new ArrayList<Guess>();//TODO: maybe remove this?
-        /* For every row */
-        for (int row = 0; row < numRow; ++row) {
-            /* Do one set of columns in the even rows,
-               another in the odd rows */
-            for (int col = row%2; col < numCol; col+= 2) {
-                /* Form a guess for the row and column */
-                Guess cellGuess = new Guess();
-                cellGuess.row = row;
-                cellGuess.column = col;
-                /* Add it to the list */
-                unguessed.add(cellGuess);
-            }
-        }
-        targetGrid = new MonteCoord[numCol][numRow];
+        seekGrid = new MonteCoord[numCol][numRow];
         populateTargetGrid();
         longestTarget = 5;
-        targetsLeft = {2, 3, 3, 4, 5};
+        targetsLeft = new int[5];
+        targetsLeft[0] = 2;
+        targetsLeft[1] = 3;
+        targetsLeft[2] = 3;
+        targetsLeft[3] = 4;
+        targetsLeft[4] = 5;
         longestTarget = 5;
-        System.out.println("Monte Carlo player init: unguessed grid=");
-        System.out.println(unguessed);
+        strikes = new ArrayList<MonteCoord>();
     } // end of initialisePlayer()
 
     public void populateTargetGrid()
@@ -92,7 +84,7 @@ public class MonteCarloGuessPlayer extends RandomGuessPlayer implements Player{
                     default:
                         currentOdds += 17;
                 }
-                targetGrid[x][y] = new MonteCoord(x, y, currentOdds);
+                seekGrid[x][y] = new MonteCoord(x, y, currentOdds);
             }
         }
     }
@@ -106,17 +98,42 @@ public class MonteCarloGuessPlayer extends RandomGuessPlayer implements Player{
     @Override
     public Guess makeGuess() {
         // To be implemented.
-        if(!lockedTarget)
+        if(lockedTarget == null || lockedTarget.state != 'h')
         {//Seeking target
             MonteCoord chosenTarget = fetchBestSeek();
             Guess target = new Guess();
-            target.col = chosenTarget.col;
+            target.column = chosenTarget.col;
             target.row = chosenTarget.row;
             return target;
         }
         else//TODO: Cleanup after killing a target?
         {//Eliminating target
-            
+            if(size(strikes) == 1)
+            {
+                //clean target seeking
+                int width  = targetWidth(strikes.get(0));
+                int height = targetHeight(strike.get(0));
+                int runningTotalOdds = 0;
+                int i;
+                /*for(i = 0; i < targetsLeft.length; i++)
+                {
+                    if(targetsLeft[i] != 0 && width - targetsLeft[i] > 0)
+                    {
+                        runningTotalOdds += Math.min(targetsLeft[i], width - targetsLeft[i] + 1 - strikes.size());
+                    }
+                    if(targetsLeft[i] != 0 && height - targetsLeft[i] > 0)
+                    {
+                        runningTotalOdds += Math.min(targetsLeft[i], height - targetsLeft[i] + 1 - strikes.size());
+                    }
+                    i++;
+                }
+                */
+            }
+            else
+            {
+                //multi-point seeking
+                
+            }
         }
         // dummy return
         return null;
@@ -130,17 +147,17 @@ public class MonteCarloGuessPlayer extends RandomGuessPlayer implements Player{
         {
             for(y = 0; y < numRow; y ++)
             {
-                if(targetGrid[x][y].odds > best)
+                if(seekGrid[x][y].odds > best)
                 {
-                    bestSquares.clear()
-                    best = targetGrid[x][y].odds;
-                    bestSquares.add(targetGrid[x][y]);
+                    bestSquares.clear();
+                    best = seekGrid[x][y].odds;
+                    bestSquares.add(seekGrid[x][y]);
                 }
                 else
                 {
-                    if(targetGrid[x][y].odds == best)
+                    if(seekGrid[x][y].odds == best)
                     {
-                        bestSquares.add(targetGrid[x,y]);
+                        bestSquares.add(seekGrid[x][y]);
                     }
                 }
             }
@@ -156,14 +173,15 @@ public class MonteCarloGuessPlayer extends RandomGuessPlayer implements Player{
         {
             if(answer.shipSunk == null)//Hit without sinking
             {
-                targetGrid[guess.column][guess.row].state = 'h';
-                targetGrid[guess.column][guess.row].odds = 0;
+                seekGrid[guess.column][guess.row].state = 'h';
+                seekGrid[guess.column][guess.row].odds = 0;
                 lockedTarget = true;
+                strikes.add(seekGrid[guess.column][guess.row]);
             }
             else//Hit, sunk
             {
-                targetGrid[guess.column][guess.row].state = 's';
-                targetGrid[guess.column][guess.row].odds = 0;
+                seekGrid[guess.column][guess.row].state = 's';
+                seekGrid[guess.column][guess.row].odds = 0;
                 clearStrikes();//TODO: IMPLEMENT THIS
                 lockedTarget = false;
                 int sunkIndex;
@@ -188,6 +206,8 @@ public class MonteCarloGuessPlayer extends RandomGuessPlayer implements Player{
                         sunkIndex = -1;
                         System.out.println("Error: Bad sunk name");
                 }
+                //TODO Removing strikes here
+                //strikes -= targetsLeft[sunkIndex];
                 targetsLeft[sunkIndex] = 0;
                 int i = targetsLeft.length - 1;
                 while(targetsLeft[i] == 0)
@@ -195,16 +215,18 @@ public class MonteCarloGuessPlayer extends RandomGuessPlayer implements Player{
                     i--;
                 }
                 longestTarget = targetsLeft[i];
+                oddsUpdate(targetsLeft);
             }
         }
         else//Missed
         {
-            targetGrid[guess.column][guess.row].state = 'm';
-            targetGrid[guess.column][guess.row].odds = 0;
+            seekGrid[guess.column][guess.row].state = 'm';
+            seekGrid[guess.column][guess.row].odds = 0;
             oddsUpdate(guess);
         }
     } // end of update()
     
+    //Called after a shot is missed
     public void oddsUpdate(Guess guess)
     {
         int i, x, y;
@@ -216,6 +238,19 @@ public class MonteCarloGuessPlayer extends RandomGuessPlayer implements Player{
             cellUpdate(x - i, y);
             cellUpdate(x, y + i);
             cellUpdate(x, y - i);
+        }
+    }
+    
+    //Called after a ship is sunk
+    public void oddsUpdate(int[] targetsLeft)
+    {
+        int x, y;
+        for(x = 0; x < numCol; x++)
+        {
+            for(y = 0; y < numRow; y++)
+            {
+                cellUpdate(x,y);
+            }
         }
     }
     
@@ -238,18 +273,18 @@ public class MonteCarloGuessPlayer extends RandomGuessPlayer implements Player{
             }
             i++;
         }
-        targetGrid[x][y].odds = runningTotalOdds;
+        seekGrid[x][y].odds = runningTotalOdds;
     }
     
     //Method for finding how many spaces are free to the left and right of a target
     public int targetWidth(int col, int row)
     {
-        width = 1;
+        int width = 1;
         int i = 1;
         boolean stillClear = true;
         while(i < longestTarget && col + i < numCol && stillClear)
         {
-            if(this.targetGrid[col+i][row].state == 'n' || this.targetGrid[col+i][row] == 'h')
+            if(this.seekGrid[col+i][row].state == 'n' || this.seekGrid[col+i][row].state == 'h')
             {
                 width++;
                 i++;
@@ -263,7 +298,7 @@ public class MonteCarloGuessPlayer extends RandomGuessPlayer implements Player{
         stillClear = true;
         while(i < longestTarget && col-i >= 0 && stillClear)
         {
-            if(this.targetGrid[col-i][row].state == 'n' || this.targetGrid[col-i][row] == 'h')
+            if(this.seekGrid[col-i][row].state == 'n' || this.seekGrid[col-i][row].state == 'h')
             {
                 width++;
                 i++;
@@ -279,12 +314,12 @@ public class MonteCarloGuessPlayer extends RandomGuessPlayer implements Player{
     //Method for finding how many spaces are free above and below a target
     public int targetHeight(int col, int row)
     {
-        height = 1;
+        int height = 1;
         int i = 1;
         boolean stillClear = true;
         while(i < longestTarget && row + i < numRow && stillClear)
         {
-            if(this.targetGrid[col][row+i].state == 'n' || this.targetGrid[col][row+i] == 'h')
+            if(this.seekGrid[col][row+i].state == 'n' || this.seekGrid[col][row+i].state == 'h')
             {
                 height++;
                 i++;
@@ -298,7 +333,7 @@ public class MonteCarloGuessPlayer extends RandomGuessPlayer implements Player{
         stillClear = true;
         while(i < longestTarget && row-i >= 0 && stillClear)
         {
-            if(this.targetGrid[col][row-i].state == 'n' || this.targetGrid[col][row-i] == 'h')
+            if(this.seekGrid[col][row-i].state == 'n' || this.seekGrid[col][row-i].state == 'h')
             {
                 height++;
                 i++;
@@ -318,7 +353,7 @@ public class MonteCarloGuessPlayer extends RandomGuessPlayer implements Player{
     
     @Override
     public boolean noRemainingShips() {
-        return Super.noRemainingShips();
+        return super.noRemainingShips();
     } // end of noRemainingShips()
 
 } // end of class MonteCarloGuessPlayer
