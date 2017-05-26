@@ -5,6 +5,11 @@ import world.World;
 
 import java.util.Random;
 import java.util.ArrayList;
+import java.util.PriorityQueue;
+
+import java.util.Comparator;
+
+import world.TopLeftCoordinate;
 
 /**
  * Greedy guess player (task B).
@@ -16,6 +21,9 @@ public class GreedyGuessPlayer extends RandomGuessPlayer implements Player {
 
     // Some Fields are inherited from RandomGuessPlayer
     boolean targetingMode = false;
+    private PriorityQueue<World.Coordinate> possibleCoords;
+    private World enemyWorld;
+    private Comparator<World.Coordinate> comparator;
     
     @Override
     public void initialisePlayer(World world) {
@@ -23,6 +31,10 @@ public class GreedyGuessPlayer extends RandomGuessPlayer implements Player {
         this.numCol = world.numColumn;
         this.world = world;
         this.random = new Random();
+        this.enemyWorld = new World();
+        this.comparator = new TopLeftCoordinate();
+        this.possibleCoords = new
+            PriorityQueue<World.Coordinate>(comparator);
         /* Construct a list of all unguessed cells viz. all cells, which we 
            will later make guesses as a random index of. */
         this.unguessed = new ArrayList<Guess>();
@@ -51,11 +63,30 @@ public class GreedyGuessPlayer extends RandomGuessPlayer implements Player {
 
     @Override
     public Guess makeGuess() {
-        if (targetingMode) {
-            // NYI
-            return super.makeGuess();
+        if (possibleCoords.size() > 0) {
+            World.Coordinate wcGuess = possibleCoords.poll();
+            Guess g = new Guess();
+            g.row = wcGuess.row;
+            g.column = wcGuess.column;
+            return g;
         }
-        else return super.makeGuess();
+        /*else*/  {
+            // Grab a random guess, but avoid those we have already shot at in
+            // targeting mode. Targeting mode does not remove the guesses, so we
+            // need to check that they are new before making them.
+            while (true) {
+                Guess randomGuess = super.makeGuess();
+                World.Coordinate coord = null;
+                try {
+                    coord = world.new Coordinate();
+                } catch (NullPointerException ne) {
+                    System.out.println("Possiblecoords:"+possibleCoords);
+                }
+                coord.row = randomGuess.row;
+                coord.column = randomGuess.column;
+                return randomGuess;
+            }
+        }
     }
 
 
@@ -65,9 +96,42 @@ public class GreedyGuessPlayer extends RandomGuessPlayer implements Player {
       * else we keep randomly guessing from our guess set.
       */
     public void update(Guess guess, Answer answer) {
-        // TODO: Detect which direction the ship is placed after two guesses
         // If we hit but haven't destroyed, targeting mode
         if (answer.isHit && answer.shipSunk == null) {
+            /* Enqueue all adjacent cells that haven't already been fired at */
+
+            /* Generate -1, 0, +1 for both directions */
+
+            /* Rows */
+            for (int i = -1; i < 2; i += 2) {
+                // Construct the coordinate
+                World.Coordinate coord = enemyWorld.new Coordinate();
+                coord.row = guess.row + i;
+                coord.column = guess.column;
+                // Do not insert out of range coordinate
+                if (coord.row < 0 || coord.row > (numRow-1)) {
+                    continue;
+                }
+
+                // Do not insert a cell we have already fired at
+                if (!world.shots.contains(coord)) {
+                    possibleCoords.add(coord);
+                }
+            }
+            for (int i = -1; i < 2; i += 2) {
+                World.Coordinate coord = enemyWorld.new Coordinate();
+                coord.column = guess.column + i;
+                coord.row = guess.row;
+                // Do not insert out of range coordinate
+                if (coord.column < 0 || coord.column > (numCol)-1) {
+                    continue;
+                }
+
+                // Do not insert a cel we have already fired at
+                if (!world.shots.contains(coord)) {
+                    possibleCoords.add(coord);
+                }
+            }
             targetingMode = true;
         }
         // Otherwise keep guessing randomly

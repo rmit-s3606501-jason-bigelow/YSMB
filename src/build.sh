@@ -1,1 +1,1 @@
-javac -cp .:samplePlayer.jar BattleshipMain.java
+javac -g -cp .:samplePlayer.jar BattleshipMain.java
