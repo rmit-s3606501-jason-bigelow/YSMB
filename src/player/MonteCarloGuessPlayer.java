@@ -11,13 +11,19 @@ import world.World;
  *
  * @author Youhan, Jeffrey
  */
+ /*
+ *  This works by finding probability weightings of all spaces for both seeking
+ *  and eliminating ships. It biases towards the center, clear areas, and maximally
+ *  prioritises struck ships.
+ *
+ */
 public class MonteCarloGuessPlayer extends RandomGuessPlayer implements Player{
-    public MonteCoord lockedTarget = null;
-    public boolean lockChanged;//TODO: consider moving to a method
-    public ArrayList<MonteCoord> strikes;
-    public MonteCoord[][] seekGrid;
-    public int[] targetsLeft;
-    public int longestTarget;
+    public MonteCoord lockedTarget = null;//Most recently struck ship
+    public boolean lockChanged;//Unused, potentially useful for further improvements
+    public ArrayList<MonteCoord> strikes;//Stores a list of active hits not yet cleared
+    public MonteCoord[][] seekGrid;//Main object for storing board information for choosing firing targets
+    public int[] targetsLeft;//Array of ship lengths in order
+    public int longestTarget;//Longest remaining enemy ship, used in some calculations
     @Override
     public void initialisePlayer(World world) {
         this.numRow = world.numRow;
@@ -28,8 +34,8 @@ public class MonteCarloGuessPlayer extends RandomGuessPlayer implements Player{
         populateTargetGrid();
         longestTarget = 5;
         targetsLeft = new int[5];
-        targetsLeft[0] = 2;
-        targetsLeft[1] = 3;
+        targetsLeft[0] = 2;//These could be reimplemented with constants or
+        targetsLeft[1] = 3;//variables if other sets of ships are desired
         targetsLeft[2] = 3;
         targetsLeft[3] = 4;
         targetsLeft[4] = 5;
@@ -38,7 +44,7 @@ public class MonteCarloGuessPlayer extends RandomGuessPlayer implements Player{
         lockChanged = false;
     } // end of initialisePlayer()
 
-    public void populateTargetGrid()
+    public void populateTargetGrid()//Fills in the probablility grid at the start of the game
     {
         int x, y, simpleSpace, currentOddsX = 0, currentOddsY = 0;
         //Populating the central regions
@@ -95,7 +101,6 @@ public class MonteCarloGuessPlayer extends RandomGuessPlayer implements Player{
 
     @Override
     public Guess makeGuess() {
-        // To be implemented.
         MonteCoord chosenTarget;
         if(lockedTarget == null || lockedTarget.state != 'h')
         {//Seeking target
@@ -117,7 +122,7 @@ public class MonteCarloGuessPlayer extends RandomGuessPlayer implements Player{
         return target;
     } // end of makeGuess()
 
-    public MonteCoord fetchBestSeek()
+    public MonteCoord fetchBestSeek()//Finds the highest probability for locating a new ship
     {
         int x, y, best = 0;
         ArrayList<MonteCoord> bestSquares = new ArrayList<MonteCoord>();
@@ -147,7 +152,7 @@ public class MonteCarloGuessPlayer extends RandomGuessPlayer implements Player{
         return bestSquares.get(randIndex);
     }
     
-    public MonteCoord fetchBestKill()
+    public MonteCoord fetchBestKill()//Finds the highest probability for finishing off a ship
     {
         int x, y, best = 0;
         ArrayList<MonteCoord> bestSquares = new ArrayList<MonteCoord>();
@@ -176,7 +181,6 @@ public class MonteCarloGuessPlayer extends RandomGuessPlayer implements Player{
     
     @Override
     public void update(Guess guess, Answer answer) {
-        // To be implemented.
         if(answer.isHit)
         {
             strikes.add(seekGrid[guess.column][guess.row]);
@@ -247,7 +251,7 @@ public class MonteCarloGuessPlayer extends RandomGuessPlayer implements Player{
         
     } // end of update()
     
-    //Called after a shot is missed
+    //Called after a shot is missed, redraws the local area
     public void oddsUpdate(Guess guess)
     {
         int i, x, y;
@@ -286,7 +290,7 @@ public class MonteCarloGuessPlayer extends RandomGuessPlayer implements Player{
         }
     }
     
-    //Called after a ship is sunk
+    //Called after a ship is sunk, redraws the whole board's probabilities
     public void oddsUpdate(int[] targetsLeft)
     {
         int x, y;
@@ -324,7 +328,7 @@ public class MonteCarloGuessPlayer extends RandomGuessPlayer implements Player{
         seekGrid[x][y].odds = runningTotalOdds;
     }
     
-    public void updateKillerOdds(MonteCoord givenLock)
+    public void updateKillerOdds(MonteCoord givenLock)//Finds the likelyhood of a ship being in each space around a hit
     {
         int i, ships, spacesAbove,spacesBelow,spacesRight,spacesLeft, maxVal;
         boolean stillClear;
@@ -392,7 +396,7 @@ public class MonteCarloGuessPlayer extends RandomGuessPlayer implements Player{
                     stillClear = false;
                 }
             }
-            //Iterating through each axis, adding up the expected
+            //Iterating through each axis, adding up the position possibilites
             if(spacesAbove + spacesBelow + 1 >= targetsLeft[ships])
             {
                 maxVal = Math.min(targetsLeft[ships] - 1, spacesAbove + spacesBelow + 2 - targetsLeft[ships]);
@@ -527,27 +531,7 @@ public class MonteCarloGuessPlayer extends RandomGuessPlayer implements Player{
             strikes.clear();
         }
         else//some hits remain, so we eliminate the killed ship, and keep hunting
-        {
-            //Finding the spaces in the killed ship TODO: Redo all of this
-            /*int xShift = x - lockedTarget.col;
-            int yShift = y - lockedTarget.row;
-            int i;
-            for(i = 0; i < killLength; i++)
-            {
-                currentClearing = seekGrid[x + xShift * i][y + yShift * i];
-                if(currentClearing.state == 'h')
-                {
-                    currentClearing.state = 's';
-                    currentClearing.odds = 0;
-                    currentClearing.killerOdds = 0;
-                    strikes.remove(currentClearing);
-                }
-                else
-                {
-                    System.out.println("ERROR: Wrong cell found in clearing strikes.");
-                }
-            }*/
-            
+        {//Checks how far a ship could stretch in each direction, and then clears out the one that works
             //Checking each direction
             char dir;//N,S,E,W
             int length = 0, i;

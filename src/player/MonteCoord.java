@@ -1,8 +1,10 @@
 package player;
+//Class used to handle the board for a Monte Carlo guessing player
+//Stores probability weightings, location, and results of fire at this space
 public class MonteCoord{
     int row;
     int col;
-    int odds;
+    int odds;//Used when seeking a target
     int killerOdds;//Used when finishing off a ship
     char state;//n for nothing, h for active hit, s for sunk, m for miss
     public MonteCoord(int x, int y)
