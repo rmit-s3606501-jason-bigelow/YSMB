@@ -23,6 +23,12 @@ public class World {
     public class Coordinate {
         public int row;
         public int column;
+
+        public Coordinate(int row, int column) {
+            this.row = row;
+            this.column = column;
+        }
+        public Coordinate() {}
         
         public String toString() {
             return String.format("Coordinate {row=%s, col=%s}", row, column);
