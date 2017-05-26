@@ -63,11 +63,8 @@ public class GreedyGuessPlayer extends RandomGuessPlayer implements Player {
 
     @Override
     public Guess makeGuess() {
-        if (targetingMode) {
+        if (possibleCoords.size() > 0) {
             World.Coordinate wcGuess = possibleCoords.poll();
-            if (wcGuess == null) {
-                break;
-            }
             Guess g = new Guess();
             g.row = wcGuess.row;
             g.column = wcGuess.column;
@@ -79,13 +76,14 @@ public class GreedyGuessPlayer extends RandomGuessPlayer implements Player {
             // need to check that they are new before making them.
             while (true) {
                 Guess randomGuess = super.makeGuess();
-                World.Coordinate coord = world.new Coordinate();
+                World.Coordinate coord = null;
+                try {
+                    coord = world.new Coordinate();
+                } catch (NullPointerException ne) {
+                    System.out.println("Possiblecoords:"+possibleCoords);
+                }
                 coord.row = randomGuess.row;
                 coord.column = randomGuess.column;
-                if (world.shots.contains(coord)) {
-                    unguessed.remove(randomGuess); 
-                    continue;
-                }
                 return randomGuess;
             }
         }
